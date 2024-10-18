@@ -1,0 +1,7 @@
+.vscode/*
+build/*
+rcmd/__pycache__/
+rcmd.egg-info
+rcmdenv
+test_json
+

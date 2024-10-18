@@ -1,0 +1,21 @@
+{
+    "boards": [
+        {
+            "boardID"   : "001",
+            "ipAddr"    : "192.168.0.163",
+            "port"      : "5000",
+            "id"        : "aimf",
+            "password"  : "siliconeuro",
+            "eval_dir"  : "/home/aimf/evaluate/"      
+        },
+        {
+            "boardID"   : "002",
+            "ipAddr"    : "192.168.0.159",
+            "port"      : "5001",
+            "id"        : "aimf",
+            "password"  : "siliconeuro",
+            "eval_dir"  : "/home/aimf/evaluate/"  
+        }
+    ]
+}
+
