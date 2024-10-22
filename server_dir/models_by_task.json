@@ -1,0 +1,37 @@
+{
+    "classify": {
+        "dir": "/home/aimf/evaluate/classify/input",
+        "models": [
+            {
+                "name": "efficientnet_lite0",
+                "hash": "25b0b4b6311db650ed7ed3677f9811d2"
+            }
+        ]
+    },
+    "detect": {
+        "dir": "/home/aimf/evaluate/detect/input",
+        "models": [
+            {
+                "name": "yolov3_tiny",
+                "hash": "86929ba0d551e95f624608b358bec0b6"
+            },
+            {
+                "name": "yolov2_tiny",
+                "hash": "0fe8890b3c964b76575ab765a1a2ffc7"
+            },
+            {
+                "name": "yolov3_keti",
+                "hash": "c2224dfe1d015545239c151f0fec4959"
+            }
+        ]
+    },
+    "detect_yolo": {
+        "dir": "/home/aimf/evaluate/detect_yolo/input",
+        "models": [
+            {
+                "name": "yolov2",
+                "hash": "c79e36b0a05856605ca1f70df2b21592"
+            }
+        ]
+    }
+}

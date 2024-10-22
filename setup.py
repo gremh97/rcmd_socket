@@ -15,6 +15,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "click",
+        "paramiko",
+        "scp",
+        "pgrep",
     ],
     entry_points='''
         [console_scripts]
