@@ -17,7 +17,6 @@ setup(
         "click",
         "paramiko",
         "scp",
-        "pgrep",
         "tqdm",
     ],
     entry_points='''
