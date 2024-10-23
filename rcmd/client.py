@@ -55,11 +55,10 @@ class Client:
                 
                 try:
                     current_data = response.decode('utf-8')
-                    # 스트리밍 데이터 처리 (진행률 표시)
                     if '\n' in current_data:
                         lines = current_data.split('\n')
                         for line in lines:
-                            if not line:  # 빈 라인 스킵
+                            if not line:
                                 continue
                             try:
                                 message = json.loads(line)
@@ -80,7 +79,6 @@ class Client:
                             except json.JSONDecodeError:
                                 continue
                     
-                    # 일반 메시지 처리 (응답 또는 에러)
                     elif response.endswith((b'}', b'$')):
                         if pbar:
                             pbar.close()
