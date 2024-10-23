@@ -1,9 +1,46 @@
 import click
 import json
 import os
-import paramiko, pgrep
+import paramiko, time
 from typing import List, Dict
 from .client import Client
+
+def wait_for_server_ready(ssh, port: int, max_retries: int = 10, retry_delay: float = 1.0) -> bool:
+    """
+    Wait for the server to be ready
+    
+    Args:
+        ssh: SSH client instance
+        port: Port number to check
+        max_retries: Maximum number of retry attempts
+        retry_delay: Delay between retries in seconds
+    
+    Returns:
+        bool: True if server is ready, False otherwise
+    """
+    for i in range(max_retries):
+        # 1. Check if the process is running
+        stdin, stdout, stderr = ssh.exec_command(f"pgrep -f 'python main.py -p {port}'")
+        if not stdout.read().decode().strip():
+            if i == max_retries - 1:
+                click.echo("Server process not found after maximum retries", err=True)
+                return False
+            time.sleep(retry_delay)
+            continue
+        
+        # 2. Check if the port is actually listening
+        stdin, stdout, stderr = ssh.exec_command(f"netstat -tuln | grep {port}")
+        if not stdout.read().decode().strip():
+            if i == max_retries - 1:
+                click.echo("Server port not listening after maximum retries", err=True)
+                return False
+            time.sleep(retry_delay)
+            continue
+            
+        click.echo(f"Server is ready (attempt {i + 1}/{max_retries})")
+        return True
+        
+    return False
 
 def run_server(board):
     ssh = paramiko.SSHClient()
@@ -13,24 +50,39 @@ def run_server(board):
         ssh.connect(
             hostname=board['ipAddr'], 
             username=board['username'], 
-            password=board['password'] 
+            password=board['password']
         )
         
-        # checking server process
-        stdin, stdout, stderr = ssh.exec_command('pgrep -f main.py')
+        # Check server process
+        stdin, stdout, stderr = ssh.exec_command(f"pgrep -f 'python main.py -p {board['port']}'")
         process_output = stdout.read().decode().strip()
         
         if process_output:
             click.echo(f"Script is already running with PID(s): {process_output}")
+            # Even if already running, verify the server is responding
+            if not wait_for_server_ready(ssh, board['port']):
+                click.echo("Existing server is not responding properly", err=True)
+                return False
         else:
-            # 스크립트가 실행 중이 아니면 실행
+            # If script is not running, start it
             click.echo("Script is not running. Starting script...")
-            stdin, stdout, stderr = ssh.exec_command(f"cd {os.path.join(board['eval_dir'],'server_dir')} && python main.py -p {board['port']}")
-            click.echo(f"Started script: {stdout.read().decode()}")
+            stdin, stdout, stderr = ssh.exec_command(
+                f"cd {os.path.join(board['eval_dir'],'server_dir')} && "
+                f"nohup python main.py -p {board['port']} > server.log 2>&1 &"
+            )
+            
+            # Wait for server to be ready
+            if not wait_for_server_ready(ssh, board['port']):
+                click.echo("Failed to start server properly", err=True)
+                return False
+                
+            click.echo("Server started successfully")
+            
+        return True
         
     except paramiko.SSHException as e:
         click.echo(f"Failed to execute server script: {e}", err=True)
-        return
+        return False
     finally:
         ssh.close()
 
@@ -54,7 +106,8 @@ class RCMD:
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
             return
-        # run_server(board)
+        if not run_server(board):  # 서버 실행 결과 확인
+            return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         try:
             client.communicate(
@@ -73,7 +126,8 @@ class RCMD:
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
             return
-        # run_server(board)
+        if not run_server(board):  # 서버 실행 결과 확인
+            return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         try:
             client.communicate(
