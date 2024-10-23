@@ -157,12 +157,13 @@ class Client:
 
 
     def display_model_list(self, result):
-        click.echo("==================== ModelList====================")
+        click.echo("====================== ModelList ======================")
         for category, info in result.items():
             click.echo(f"\n{category}: {info['dir']}")
 
             for model in info["models"]:
                 click.echo(f"\t{model['name']}")
+        click.echo("=======================================================")
 
 
     def display_classifier_result(self, result):
@@ -184,13 +185,17 @@ class Client:
         top1_acc    = filtered_result.get('top1_accuracy', 'N/A')
         top5_acc    = filtered_result.get('top5_accuracy', 'N/A')
 
-        click.echo(f"======== Image Classification for {model_name} ========")
+        title = f"\n================ Image Classification for {model_name} ================="
+
+        click.echo(title)
         click.echo(f"  LNE file       : {lne_path}")
         click.echo(f"  Average FPS    : {avg_fps}")
         click.echo(f"      min FPS    : {min_fps}")
         click.echo(f"      max FPS    : {max_fps}")
         click.echo(f"  Top-1 Accuracy : {top1_acc}")
         click.echo(f"  Top-5 Accuracy : {top5_acc}")
+        click.echo(f"{'='*len(title)}")
+
 
 
     def save_log_data(self, model_name, log_data):
