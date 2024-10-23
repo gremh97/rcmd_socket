@@ -18,6 +18,7 @@ setup(
         "paramiko",
         "scp",
         "pgrep",
+        "tqdm",
     ],
     entry_points='''
         [console_scripts]

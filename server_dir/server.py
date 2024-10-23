@@ -104,12 +104,12 @@ class Server:
                     else:
                         client_socket.sendall(b"Invalid task")
                         continue
-                    json_result = json.dumps(evaluator.evaluate())
+                    json_result = json.dumps(evaluator.evaluate(client_socket))+"\n"
 
                 client_socket.sendall(json_result.encode('utf-8'))
 
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"server:  An error occurred: {e}")
         finally:
             with self.lock:
                 self.clients.remove(client_socket)  # 클라이언트 소켓 제거

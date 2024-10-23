@@ -1,6 +1,7 @@
 import socket
 import json
 import click
+from tqdm import tqdm
 
 class Client:
     def __init__(self, server_ip='192.168.0.163', port=5000, buffer_size=4096, timeout=None):
@@ -21,24 +22,85 @@ class Client:
         serialized_data = json.dumps(data)
         self.client_socket.sendall(serialized_data.encode('utf-8'))
 
+    # def receive_data(self):
+    #     response = b""
+    #     while True:
+    #         try:
+    #             chunk = self.client_socket.recv(self.buffer_size)
+    #             if not chunk:
+    #                 break
+    #             response += chunk
+    #             if response.endswith((b'}',b'$')): # Assuming JSON response
+    #                 break
+    #         except socket.timeout:
+    #             click.echo("Timeout while receiving data", err=True)
+    #             break
+    #     try:
+    #         # Check if JSON 
+    #         return json.loads(response.decode('utf-8'))
+    #     except json.JSONDecodeError:
+    #         return response.decode('utf-8')
+
     def receive_data(self):
         response = b""
+        pbar = None
+        
         while True:
             try:
                 chunk = self.client_socket.recv(self.buffer_size)
                 if not chunk:
                     break
+                    
                 response += chunk
-                if response.endswith((b'}',b'$')): # Assuming JSON response
-                    break
+                
+                try:
+                    current_data = response.decode('utf-8')
+                    # 스트리밍 데이터 처리 (진행률 표시)
+                    if '\n' in current_data:
+                        lines = current_data.split('\n')
+                        for line in lines:
+                            if not line:  # 빈 라인 스킵
+                                continue
+                            try:
+                                message = json.loads(line)
+                                # click.echo(f"Parsed JSON message: {message}") 
+                                if message.get("type") == "progress":
+                                    if pbar is None:
+                                        pbar = tqdm(
+                                            total=message["total"],
+                                            desc="Processing"
+                                        )
+                                    pbar.update(message["current"] - pbar.n)
+                                    # pbar.set_postfix({'speed': message['speed']})
+                                    response = b""  # clear buffer
+                                elif message.get("type") == "complete_classifier":
+                                    if pbar:
+                                        pbar.close()
+                                    return message
+                            except json.JSONDecodeError:
+                                continue
+                    
+                    # 일반 메시지 처리 (응답 또는 에러)
+                    elif response.endswith((b'}', b'$')):
+                        if pbar:
+                            pbar.close()
+                        try:
+                            return json.loads(current_data)
+                        except json.JSONDecodeError:
+                            return current_data
+                        
+                except UnicodeDecodeError:
+                    continue
+                    
             except socket.timeout:
+                if pbar:
+                    pbar.close()
                 click.echo("Timeout while receiving data", err=True)
                 break
-        try:
-            # Check if JSON 
-            return json.loads(response.decode('utf-8'))
-        except json.JSONDecodeError:
-            return response.decode('utf-8')
+        
+        if pbar:
+            pbar.close()
+        return response.decode('utf-8')
 
     def communicate(self, option, task=None, model_name=None, lne_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None):
         if  option == "exit":
@@ -87,7 +149,9 @@ class Client:
             if isinstance(result, str):
                 click.echo(str)
             else:
-                self.display_test_result(result)
+                self.display_classifier_result(result)
+
+
             if log: 
                 self.save_log_data(result.get('model_name', 'unknown_model'), result.get('log_data', {}))
 
@@ -101,7 +165,7 @@ class Client:
                 click.echo(f"\t{model['name']}")
 
 
-    def display_test_result(self, result):
+    def display_classifier_result(self, result):
         filtered_result = {}
         for k, v in result.items():
             if k == 'log_data':

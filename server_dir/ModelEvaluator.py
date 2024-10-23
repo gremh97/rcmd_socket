@@ -39,7 +39,7 @@ class ClassifierEvaluator:
         else: raise NotImplementedError(f"Invalid model_name={self.model_name} provided")
 
 
-    def evaluate(self):
+    def evaluate(self, client_socket=None):
         print(f"... {self.model_name} evaluation in progress...")
         (IH, IW)        = self.input_shape
         (RH, RW)        = self.preproc_resize
@@ -59,8 +59,26 @@ class ClassifierEvaluator:
             image_files.extend(sorted(glob.glob(f"{image_dir}/*")))
         fps             = []
         top1, top5      = 0, 0
+        start_time = time.time()
 
         for n, image_file in tenumerate(image_files[:self.num_images]):
+            if client_socket: 
+                current_fps = (n + 1) / (time.time() - start_time) if time.time() - start_time > 0 else 0
+                current = n+1
+                total = self.num_images
+                progress = {
+                "type": "progress",
+                "current": current,
+                "total": total,
+                "progress": f"{(current/total*100):.1f}%",
+                "speed": f"{current_fps:.2f}it/s"
+            }
+            try:
+                client_socket.send((json.dumps(progress)+"\n").encode('utf-8'))
+            except:
+                print("Failed to send progress")
+
+
             image       = PIL.Image.open(image_file).convert("RGB").resize(self.preproc_resize).crop(crop_box)
             inputs      = self.preproc_fn(np.expand_dims(np.asarray(image), 0)).astype("float32")
             self.model  .set_tensor(self.model.get_input_details()[0]["index"], inputs)
@@ -80,6 +98,7 @@ class ClassifierEvaluator:
                 self.log_data.append(log_entry)
 
         results = {
+            "type"          : "complete_classifier",
             "model_name"    : self.model_name,
             "lne_path"      : self.lne_path,
             "average_fps"   : f"{np.mean(fps)}",
