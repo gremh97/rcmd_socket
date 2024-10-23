@@ -106,7 +106,7 @@ class RCMD:
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
             return
-        if not run_server(board):  # 서버 실행 결과 확인
+        if not run_server(board): 
             return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         try:
@@ -126,7 +126,7 @@ class RCMD:
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
             return
-        if not run_server(board):  # 서버 실행 결과 확인
+        if not run_server(board): 
             return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         try:
