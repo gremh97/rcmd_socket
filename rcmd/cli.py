@@ -42,7 +42,7 @@ def wait_for_server_ready(ssh, port: int, max_retries: int = 10, retry_delay: fl
         
     return False
 
-def run_server(board):
+def run_server(board) -> bool:
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
