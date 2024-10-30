@@ -161,6 +161,7 @@ class YoloEvaluator:
         ]
         self.colors         = generate_colors(len(self.class_names))
         self.save_json      = save_json
+        self.fps            = []
 
     def _preprocess(self, img, fill=128):
         img         = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -193,8 +194,9 @@ class YoloEvaluator:
 
     def _inference(self, img):
         self.interpreter.set_tensor(self.input_detail[0]['index'], img)
-        timeref         = time.time()
+        t0          = time.time()
         self.interpreter.invoke()
+        self.fps.append(1 / (time.time() - t0))
 
         OD        = self.output_detail      # shorcut to output_detail
         if   ("yolov2" in self.model_name):
@@ -289,6 +291,7 @@ class YoloEvaluator:
         results = {
             "type"        : "complete_yolo",
             "model_name"  : self.model_name,
+            "average_fps" : np.mean(self.fps),
             "detections"  : detections
         }
         return results               

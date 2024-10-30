@@ -207,6 +207,7 @@ class Client:
     def display_yolo_result(self, result):
         model_name = result.get("model_name")
         detections = result.get("detections")
+        avg_fps    = result.get("average_fps")
         
         # Suppress output messages
         def suppress_stdout():
@@ -264,8 +265,9 @@ class Client:
         coco_eval.summarize()
         click.echo("\nClass-wise AP50 and mAP:")
         click.echo(tabulate.tabulate(table_data, headers, tablefmt="pipe", floatfmt=".1f"))
-        click.echo(f"\nALL CLASS AVERAGE AP50  : {sum(category_AP50)/len(category_AP50):.3f}")
-        click.echo(f"ALL CLASS AVERAGE mAP50 : {sum(category_mAP)/len(category_mAP):.3f}")
+        click.echo(f"\nALL CLASS Average AP50     : {sum(category_AP50)/len(category_AP50):.3f}")
+        click.echo(f"ALL CLASS Average mAP50    : {sum(category_mAP)/len(category_mAP):.3f}")
+        click.echo(f"   Average FPS             : {avg_fps:.3f}")
         click.echo(f"{'='*len(title)}\n")
 
 
