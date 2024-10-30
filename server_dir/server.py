@@ -111,8 +111,12 @@ class Server:
                         client_socket.sendall(b"Invalid task")
                         continue
                     json_result = json.dumps(evaluator.evaluate(client_socket))+"\n"
-
-                client_socket.sendall(json_result.encode('utf-8'))
+                try:
+                    client_socket.settimeout(None)
+                    client_socket.sendall(json_result.encode('utf-8'))
+                finally:
+                    client_socket.settimeout(self.server_timeout)
+                    print("Done with send all")
 
         except Exception as e:
             print(f"server:  An error occurred: {e}")
