@@ -168,8 +168,8 @@ class Client:
         top1_acc    = filtered_result.get('top1_accuracy', 'N/A')
         top5_acc    = filtered_result.get('top5_accuracy', 'N/A')
 
-        title = f"\n\n================== Image Classification for {model_name} =================="
-  
+        click.echo("\n\n")
+        title = f"================== Image Classification for {model_name} =================="
         click.echo(title)
         click.echo(f"  LNE file       : {lne_path}")
         click.echo(f"  Average FPS    : {avg_fps}")
@@ -234,7 +234,8 @@ class Client:
         table_data = np.stack([category_names, category_AP50, category_mAP]).T
         headers = ["Class", "AP50", "mAP"]
 
-        title = f"\n========================== Image Detection for {model_name} ===========================\n"
+        click.echo("\n\n")
+        title = f"========================== Image Detection for {model_name} ===========================\n"
         click.echo(title)
         coco_eval.summarize()
         click.echo("\nClass-wise AP50 and mAP:")
