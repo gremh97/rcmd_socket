@@ -10,23 +10,23 @@ import json
 import os
 
 class ClassifierEvaluator:
-    def __init__(self, model_name=None, lne_path="/home/aimf/evaluate/classify/efficientnet_lite0.lne", 
+    def __init__(self, model_name=None, lne_path="/home/aimf/evaluate/classify/input/efficientnet_lite0.lne", 
                  num_images=1000, preproc_resize=(256,256), log=False):
         self.model_name         = model_name or lne_path.split("/")[-1].split(".")[0]
         self.lne_path           = lne_path
-        self.preproc_fn     = self._get_preproc_fn()
+        self.preproc_fn         = self._get_preproc_fn()
         self.num_images         = num_images
         self.preproc_resize     = preproc_resize
         self.log                = log
         self.log_data           = []
-        self.eval_dir           = os.path.dirname(lne_path)
+        self.eval_dir           = os.path.dirname(os.path.dirname(lne_path))
 
         #  Model Initalization
         self.model              = lne.Interpreter(self.lne_path)
         self.model.allocate_tensors()
         self.input_shape        = self.model.get_input_details()[0]["shape"][1:3]
         self.output_detail      = self.model.get_output_details()[0]
-        self.groundtruth        = [int(_) for _ in open(os.path.join(self.eval_dir, "classify/labels/groundtruth.txt")).readlines()]
+        self.groundtruth        = [int(_) for _ in open(os.path.join(self.eval_dir, "labels/groundtruth.txt")).readlines()]
     
 
     def _get_preproc_fn(self):
@@ -59,11 +59,11 @@ class ClassifierEvaluator:
             image_files.extend(sorted(glob.glob(f"{image_dir}/*")))
         fps             = []
         top1, top5      = 0, 0
-        start_time = time.time()
+        start_t = time.time()
 
         for n, image_file in tenumerate(image_files[:self.num_images]):
             if client_socket: 
-                current_fps = (n + 1) / (time.time() - start_time) if time.time() - start_time > 0 else 0
+                current_fps = (n + 1) / (time.time() - start_t) if time.time() - start_t > 0 else 0
                 current = n+1
                 total = self.num_images
                 progress = {
@@ -71,8 +71,8 @@ class ClassifierEvaluator:
                 "current": current,
                 "total": total,
                 "progress": f"{(current/total*100):.1f}%",
-                "speed": f"{current_fps:.2f}it/s"
-            }
+                "speed": f"{current_fps:.2f}it/s"}
+                
                 try:
                     client_socket.send((json.dumps(progress)+"\n").encode('utf-8'))
                 except:
@@ -222,7 +222,6 @@ class YoloEvaluator:
         input_dir  = "/data/image/coco/val2017/"
         image_list = os.listdir(input_dir)
         
-        fps = []
         detections = []
         start_t = time.time()
         

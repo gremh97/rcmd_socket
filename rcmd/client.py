@@ -49,64 +49,120 @@ class Client:
     #     except json.JSONDecodeError:
     #         return response.decode('utf-8')
 
+    # def receive_data(self):
+    #     response = b""
+    #     pbar = None
+        
+    #     while True:
+    #         try:
+    #             chunk = self.client_socket.recv(self.buffer_size)
+    #             if not chunk:
+    #                 break
+                    
+    #             response += chunk
+                
+    #             try:
+    #                 current_data = response.decode('utf-8')
+    #                 if '\n' in current_data:
+    #                     lines = current_data.split('\n')
+    #                     for line in lines:
+    #                         if not line:
+    #                             continue
+    #                         try:
+    #                             message = json.loads(line)
+    #                             # click.echo(f"Parsed JSON message: {message}") 
+    #                             if message.get("type") == "progress":
+    #                                 if pbar is None:
+    #                                     pbar = tqdm(
+    #                                         total=message["total"],
+    #                                         desc="Processing"
+    #                                     )
+    #                                 pbar.update(message["current"] - pbar.n)
+    #                                 # pbar.set_postfix({'speed': message['speed']})
+    #                                 response = b""  # clear buffer
+    #                             elif message.get("type") in ("complete_classifier", "complete_yolo"):
+    #                                 if pbar:
+    #                                     pbar.close()
+    #                                 return message
+    #                         except json.JSONDecodeError:
+    #                             continue
+                    
+    #                 elif response.endswith((b'}\n', b'$\n', b'}', b'$')):
+    #                     if pbar:
+    #                         pbar.close()
+    #                     try:
+    #                         return json.loads(current_data)
+    #                     except json.JSONDecodeError:
+    #                         return current_data
+                        
+    #             except UnicodeDecodeError:
+    #                 continue
+                    
+    #         except socket.timeout:
+    #             if pbar:
+    #                 pbar.close()
+    #             click.echo("Timeout while receiving data", err=True)
+    #             break
+        
+    #     if pbar:
+    #         pbar.close()
+    #     return response.decode('utf-8')
+    
     def receive_data(self):
         response = b""
         pbar = None
-        
+        end_marker = b"$END$" # termination marker for large data
         while True:
             try:
                 chunk = self.client_socket.recv(self.buffer_size)
                 if not chunk:
-                    break
-                    
+                    break  
+
                 response += chunk
+
+                current_data = response.decode('utf-8', errors='ignore')
                 
-                try:
-                    current_data = response.decode('utf-8')
-                    if '\n' in current_data:
-                        lines = current_data.split('\n')
-                        for line in lines:
-                            if not line:
-                                continue
-                            try:
-                                message = json.loads(line)
-                                # click.echo(f"Parsed JSON message: {message}") 
-                                if message.get("type") == "progress":
-                                    if pbar is None:
-                                        pbar = tqdm(
-                                            total=message["total"],
-                                            desc="Processing"
-                                        )
-                                    pbar.update(message["current"] - pbar.n)
-                                    # pbar.set_postfix({'speed': message['speed']})
-                                    response = b""  # clear buffer
-                                elif message.get("type") in ("complete_classifier", "complete_yolo"):
-                                    if pbar:
-                                        pbar.close()
-                                    return message
-                            except json.JSONDecodeError:
-                                continue
-                    
-                    elif response.endswith((b'}\n', b'$\n', b'}', b'$')):
-                        if pbar:
-                            pbar.close()
+                # marker for large data
+                if end_marker in response:
+                    complete_message = current_data.replace(end_marker.decode('utf-8'), '')
+                    if pbar:
+                        pbar.close()
+                    try:
+                        return json.loads(complete_message)
+                    except json.JSONDecodeError:
+                        return complete_message 
+
+                # marker for small data '\n'
+                if '\n' in current_data:
+                    lines = current_data.split('\n')
+                    for line in lines:
+                        if not line:
+                            continue
                         try:
-                            return json.loads(current_data)
+                            message = json.loads(line)
+                            
+                            if message.get("type") == "progress":
+                                if pbar is None:
+                                    pbar = tqdm(total=message["total"], desc="Processing")
+                                pbar.update(message["current"] - pbar.n)
+                                response = b""
+                            else:
+                                if pbar:
+                                    pbar.close()
+                                    print('\n')
+                                return message
                         except json.JSONDecodeError:
-                            return current_data
-                        
-                except UnicodeDecodeError:
-                    continue
-                    
+                            continue
             except socket.timeout:
                 if pbar:
                     pbar.close()
                 click.echo("Timeout while receiving data", err=True)
                 break
-        
+
         if pbar:
             pbar.close()
         return response.decode('utf-8')
+
 
     def communicate(self, option, task=None, model_name=None, lne_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None):
         if  option == "exit":
@@ -152,7 +208,7 @@ class Client:
             # Receive result
             result = self.receive_data()
             if isinstance(result, str):
-                click.echo(str)
+                click.echo(result)
             elif result.get("type") == "complete_classifier":
                 self.display_classifier_result(result)
             else:
@@ -192,7 +248,8 @@ class Client:
         top1_acc    = filtered_result.get('top1_accuracy', 'N/A')
         top5_acc    = filtered_result.get('top5_accuracy', 'N/A')
 
-        title = f"\n================ Image Classification for {model_name} ================="
+        title = f"\n\n================== Image Classification for {model_name} =================="
+  
         click.echo(title)
         click.echo(f"  LNE file       : {lne_path}")
         click.echo(f"  Average FPS    : {avg_fps}")
@@ -259,12 +316,12 @@ class Client:
         table_data = np.stack([category_names, category_AP50, category_mAP]).T
         headers = ["Class", "AP50", "mAP"]
 
-        title = f"================ Image Detection for {model_name} ================="
+        title = f"\n========================== Image Detection for {model_name} ===========================\n"
         click.echo(title)
         coco_eval.summarize()
         click.echo("\nClass-wise AP50 and mAP:")
         click.echo(tabulate.tabulate(table_data, headers, tablefmt="pipe", floatfmt=".1f"))
-        click.echo(f"ALL CLASS Average AP50     : {sum(category_AP50)/len(category_AP50):.3f}")
+        click.echo(f"\nALL CLASS Average AP50     : {sum(category_AP50)/len(category_AP50):.3f}")
         click.echo(f"ALL CLASS Average mAP50    : {sum(category_mAP)/len(category_mAP):.3f}")
         click.echo(f"   Average FPS             : {avg_fps:.3f}")
         click.echo(f"{'='*len(title)}\n")

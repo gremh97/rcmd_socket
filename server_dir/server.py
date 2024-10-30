@@ -75,7 +75,7 @@ class Server:
                     task = params.get("task") or ['classify', 'detect', 'detect_yolo']
                     self.eval_dir = params.get('eval_dir') or self.eval_dir
                     model_list = update_model_list(task, self.eval_dir, self.model_json_path)
-                    json_result = json.dumps(model_list)
+                    result = model_list
 
                 else:
                     print("...Reading params from client... ")
@@ -110,10 +110,10 @@ class Server:
                     else:
                         client_socket.sendall(b"Invalid task")
                         continue
-                    json_result = json.dumps(evaluator.evaluate(client_socket))+"\n"
+                    result = evaluator.evaluate(client_socket)
                 try:
                     client_socket.settimeout(None)
-                    client_socket.sendall(json_result.encode('utf-8'))
+                    client_socket.sendall((json.dumps(result) + "\n$END$").encode('utf-8'))
                 finally:
                     client_socket.settimeout(self.server_timeout)
                     print("Done with send all")
