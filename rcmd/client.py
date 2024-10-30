@@ -8,8 +8,6 @@ from tqdm import tqdm
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-import platform
-
 
 class Client:
     def __init__(self, server_ip='192.168.0.163', port=5000, buffer_size=4096, timeout=None):
@@ -29,84 +27,6 @@ class Client:
     def send_data(self, data):
         serialized_data = json.dumps(data)
         self.client_socket.sendall(serialized_data.encode('utf-8'))
-
-    # def receive_data(self):
-    #     response = b""
-    #     while True:
-    #         try:
-    #             chunk = self.client_socket.recv(self.buffer_size)
-    #             if not chunk:
-    #                 break
-    #             response += chunk
-    #             if response.endswith((b'}',b'$')): # Assuming JSON response
-    #                 break
-    #         except socket.timeout:
-    #             click.echo("Timeout while receiving data", err=True)
-    #             break
-    #     try:
-    #         # Check if JSON 
-    #         return json.loads(response.decode('utf-8'))
-    #     except json.JSONDecodeError:
-    #         return response.decode('utf-8')
-
-    # def receive_data(self):
-    #     response = b""
-    #     pbar = None
-        
-    #     while True:
-    #         try:
-    #             chunk = self.client_socket.recv(self.buffer_size)
-    #             if not chunk:
-    #                 break
-                    
-    #             response += chunk
-                
-    #             try:
-    #                 current_data = response.decode('utf-8')
-    #                 if '\n' in current_data:
-    #                     lines = current_data.split('\n')
-    #                     for line in lines:
-    #                         if not line:
-    #                             continue
-    #                         try:
-    #                             message = json.loads(line)
-    #                             # click.echo(f"Parsed JSON message: {message}") 
-    #                             if message.get("type") == "progress":
-    #                                 if pbar is None:
-    #                                     pbar = tqdm(
-    #                                         total=message["total"],
-    #                                         desc="Processing"
-    #                                     )
-    #                                 pbar.update(message["current"] - pbar.n)
-    #                                 # pbar.set_postfix({'speed': message['speed']})
-    #                                 response = b""  # clear buffer
-    #                             elif message.get("type") in ("complete_classifier", "complete_yolo"):
-    #                                 if pbar:
-    #                                     pbar.close()
-    #                                 return message
-    #                         except json.JSONDecodeError:
-    #                             continue
-                    
-    #                 elif response.endswith((b'}\n', b'$\n', b'}', b'$')):
-    #                     if pbar:
-    #                         pbar.close()
-    #                     try:
-    #                         return json.loads(current_data)
-    #                     except json.JSONDecodeError:
-    #                         return current_data
-                        
-    #             except UnicodeDecodeError:
-    #                 continue
-                    
-    #         except socket.timeout:
-    #             if pbar:
-    #                 pbar.close()
-    #             click.echo("Timeout while receiving data", err=True)
-    #             break
-        
-    #     if pbar:
-    #         pbar.close()
-    #     return response.decode('utf-8')
     
     def receive_data(self):
         response = b""
@@ -279,9 +199,7 @@ class Client:
 
         suppress_stdout()
         # Load COCO ground truth and detections
-        annot_path = "/Users/yewon/data/image/coco/annotations" if platform.system()=="Darwin" else "/data/image/coco/annotations" 
-        coco_gt = COCO(os.path.join(annot_path, "instances_val2017.json"))  # Provide the path to annotations.json
-        # coco_gt = COCO("/Users/yewon/data/image/coco/annotations/instances_val2017.json")
+        coco_gt = COCO("/data/image/coco/annotations/instances_val2017.json")   # Provide the path to annotations.json
         coco_dt = coco_gt.loadRes("detections.json")
         restore_stdout()
 

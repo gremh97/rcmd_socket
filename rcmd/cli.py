@@ -129,12 +129,7 @@ class RCMD:
         if not run_server(board): 
             return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
-        # print("[cli.py] Client")
-        # print(f"""
-        #       task          : {task}
-        #       model_name    : {model_name}
-        #       lne_path      : {lne}      
-        #       """)
+        
         try:
             client.communicate(
                 option="test",
