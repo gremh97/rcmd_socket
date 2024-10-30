@@ -1,7 +1,15 @@
+import sys, os
 import socket
 import json
 import click
+import tabulate
+import numpy as np
 from tqdm import tqdm
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
+
+import platform
+
 
 class Client:
     def __init__(self, server_ip='192.168.0.163', port=5000, buffer_size=4096, timeout=None):
@@ -72,14 +80,15 @@ class Client:
                                     pbar.update(message["current"] - pbar.n)
                                     # pbar.set_postfix({'speed': message['speed']})
                                     response = b""  # clear buffer
-                                elif message.get("type") == "complete_classifier":
+                                elif message.get("type") in ("complete_classifier", "complete_yolo"):
                                     if pbar:
                                         pbar.close()
+                                        print('\n')
                                     return message
                             except json.JSONDecodeError:
                                 continue
                     
-                    elif response.endswith((b'}', b'$')):
+                    elif response.endswith((b'}\n', b'$\n', b'}', b'$')):
                         if pbar:
                             pbar.close()
                         try:
@@ -123,7 +132,6 @@ class Client:
             result = self.receive_data()
             self.display_model_list(result)
 
-
         else:
             if not(model_name or lne_path):
                 raise ValueError("One of model_name or lne_path must be provided")
@@ -146,8 +154,10 @@ class Client:
             result = self.receive_data()
             if isinstance(result, str):
                 click.echo(str)
-            else:
+            elif result.get("type") == "complete_classifier":
                 self.display_classifier_result(result)
+            else:
+                self.display_yolo_result(result)
 
 
             if log: 
@@ -184,7 +194,6 @@ class Client:
         top5_acc    = filtered_result.get('top5_accuracy', 'N/A')
 
         title = f"\n================ Image Classification for {model_name} ================="
-
         click.echo(title)
         click.echo(f"  LNE file       : {lne_path}")
         click.echo(f"  Average FPS    : {avg_fps}")
@@ -194,6 +203,70 @@ class Client:
         click.echo(f"  Top-5 Accuracy : {top5_acc}")
         click.echo(f"{'='*len(title)}")
 
+
+    def display_yolo_result(self, result):
+        model_name = result.get("model_name")
+        detections = result.get("detections")
+        
+        # Suppress output messages
+        def suppress_stdout():
+            sys.stdout = open(os.devnull, "w")
+
+        def restore_stdout():
+            sys.stdout.close()
+            sys.stdout = sys.__stdout__
+        
+       # Save detections to a JSON file in COCO format
+        with open("detections.json", "w") as f:
+            json.dump(detections, f)
+
+        suppress_stdout()
+        # Load COCO ground truth and detections
+        annot_path = "/Users/yewon/data/image/coco/annotations" if platform.system()=="Darwin" else "/data/image/coco/annotations" 
+        coco_gt = COCO(os.path.join(annot_path, "instances_val2017.json"))  # Provide the path to annotations.json
+        # coco_gt = COCO("/Users/yewon/data/image/coco/annotations/instances_val2017.json")
+        coco_dt = coco_gt.loadRes("detections.json")
+        restore_stdout()
+
+        # Initialize and run COCO evaluation
+        # Redirect stdout to suppress print statements
+        suppress_stdout()
+        coco_eval = COCOeval(coco_gt, coco_dt, "bbox")
+        coco_eval.evaluate()
+        coco_eval.accumulate()
+        restore_stdout()
+            
+        # Extract AP50 and mAP for each category
+        categories = coco_gt.loadCats(coco_gt.getCatIds())
+        category_names = [cat["name"] for cat in categories]
+        category_AP50 = []
+        category_mAP = []
+
+        for i, cat in enumerate(category_names):
+            # Precision for the first IoU threshold (0.5) across all categories
+            precision_AP50 = coco_eval.eval["precision"][0, :, i, 0, -1]
+            precision_AP50 = precision_AP50[precision_AP50 > -1]
+            AP50 = np.mean(precision_AP50) if precision_AP50.size else float("nan")
+            category_AP50.append(float(AP50 * 100))
+
+            # Precision for IoU range (0.5 to 0.95)
+            precision_mAP = coco_eval.eval["precision"][:, :, i, 0, -1]
+            precision_mAP = precision_mAP[precision_mAP > -1]
+            mAP = np.mean(precision_mAP) if precision_mAP.size else float("nan")
+            category_mAP.append(float(mAP * 100))
+
+        # Print class-wise AP50 and mAP
+        table_data = np.stack([category_names, category_AP50, category_mAP]).T
+        headers = ["Class", "AP50", "mAP"]
+
+        title = f"================ Image Detection for {model_name} ================="
+        click.echo(title)
+        coco_eval.summarize()
+        click.echo("\nClass-wise AP50 and mAP:")
+        click.echo(tabulate.tabulate(table_data, headers, tablefmt="pipe", floatfmt=".1f"))
+        click.echo(f"\nALL CLASS AVERAGE AP50  : {sum(category_AP50)/len(category_AP50):.3f}")
+        click.echo(f"ALL CLASS AVERAGE mAP50 : {sum(category_mAP)/len(category_mAP):.3f}")
+        click.echo(f"{'='*len(title)}\n")
 
 
     def save_log_data(self, model_name, log_data):

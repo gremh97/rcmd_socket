@@ -4,7 +4,7 @@ import json
 import time
 from threading import Thread, Lock
 
-from ModelEvaluator import ClassifierEvaluator
+from ModelEvaluator import ClassifierEvaluator, YoloEvaluator
 from json_utils import update_model_list, find_task_by_model
 
 
@@ -100,8 +100,13 @@ class Server:
                             preproc_resize=preproc_resize,
                             log=log
                         )
-                    elif task == "detect":
-                        pass
+                    elif task in ("detect", "detect_yolo") and model_name.startswith("yolo"):
+                        evaluator = YoloEvaluator(
+                            model_name=model_name,
+                            lne_path=lne_path,
+                            num_images=num_images,
+                            save_json=log
+                        )
                     else:
                         client_socket.sendall(b"Invalid task")
                         continue

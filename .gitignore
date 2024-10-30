@@ -5,4 +5,8 @@ rcmd.egg-info
 rcmdenv
 test_json
 server_dir/__pycache__*
+detections.json
+server_dir/output/
+server_dir/server.log
+server_dir/yolo_util.py
 
