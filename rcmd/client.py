@@ -243,6 +243,9 @@ class Client:
         click.echo(f"ALL CLASS Average mAP50    : {sum(category_mAP)/len(category_mAP):.3f}")
         click.echo(f"   Average FPS             : {avg_fps:.3f}")
         click.echo(f"{'='*len(title)}\n")
+        
+        if os.path.exists("detections.json"):
+            os.remove("detections.json")
 
 
     def save_log_data(self, model_name, log_data):
