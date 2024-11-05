@@ -98,10 +98,11 @@ class RCMD:
         return data['boards']
 
     def list_boards(self, return_output=False):
-        for board in self.boards:
-            click.echo(f"Board ID: {board['boardID']}, IP: {board['ipAddr']}, Port: {board['port']}")
         if return_output:
             return self.boards
+        for board in self.boards:
+            click.echo(f"Board ID: {board['boardID']}, IP: {board['ipAddr']}, Port: {board['port']}")
+       
 
     def list_models(self, board_id:str, task:str, return_output=False):
         board = next((b for b in self.boards if b['boardID'] == board_id), None)
