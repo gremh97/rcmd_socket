@@ -84,7 +84,7 @@ class Client:
         return response.decode('utf-8')
 
 
-    def communicate(self, option, task=None, model_name=None, lne_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None):
+    def communicate(self, option, task=None, model_name=None, lne_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None, return_output=False):
         if  option == "exit":
             exit_msg = {"cmd":option}
             self.send_data(exit_msg)
@@ -105,6 +105,10 @@ class Client:
             }
             self.send_data(params)
             result = self.receive_data()
+            
+            # send back for function call
+            if return_output: return result
+            
             self.display_model_list(result)
 
         else:
@@ -127,6 +131,10 @@ class Client:
 
             # Receive result
             result = self.receive_data()
+            
+            # send back for function call
+            if return_output: return result
+            
             if isinstance(result, str):
                 click.echo(result)
             elif result.get("type") == "complete_classifier":
@@ -134,9 +142,11 @@ class Client:
             else:
                 self.display_yolo_result(result)
 
-
             if log: 
                 self.save_log_data(result.get('model_name', 'unknown_model'), result.get('log_data', {}))
+        
+        return
+                
 
 
     def display_model_list(self, result):

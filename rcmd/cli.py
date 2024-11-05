@@ -97,11 +97,13 @@ class RCMD:
             data = json.load(f)
         return data['boards']
 
-    def list_boards(self):
+    def list_boards(self, return_output=False):
         for board in self.boards:
             click.echo(f"Board ID: {board['boardID']}, IP: {board['ipAddr']}, Port: {board['port']}")
+        if return_output:
+            return self.boards
 
-    def list_models(self, board_id:str, task:str):
+    def list_models(self, board_id:str, task:str, return_output=False):
         board = next((b for b in self.boards if b['boardID'] == board_id), None)
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
@@ -110,18 +112,23 @@ class RCMD:
             return
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         try:
-            client.communicate(
+            result = client.communicate(
                 option="mlist",
                 task=task,
-                eval_dir=board['eval_dir']
+                eval_dir=board['eval_dir'],
+                return_output=return_output
             )
         except Exception as e:
             click.echo(f"An error occurred: {e}", err=True)
         finally:
-            client.communicate(option="exit")
+            _ = client.communicate(option="exit")
+        
+        if return_output:
+            return result
+        
 
 
-    def run_model(self, board_id: str, model_name: str, task:str, lne:str, images:int, input_size:int):
+    def run_model(self, board_id: str, model_name: str, task:str, lne:str, images:int, input_size:int, return_output:bool):
         board = next((b for b in self.boards if b['boardID'] == board_id), None)
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
@@ -131,7 +138,7 @@ class RCMD:
         client = Client(server_ip=board['ipAddr'], port=int(board['port']))
         
         try:
-            client.communicate(
+            result = client.communicate(
                 option="test",
                 task=task,
                 model_name=model_name,
@@ -139,12 +146,16 @@ class RCMD:
                 num_images=images,
                 preproc_resize=(input_size, input_size),
                 log=False,
-                eval_dir=board['eval_dir']
+                eval_dir=board['eval_dir'],
+                return_output=return_output
             )
         except Exception as e:
             click.echo(f"An error occurred: {e}", err=True)
         finally:
-            client.communicate(option="exit")
+            _ = client.communicate(option="exit")
+        
+        if return_output:
+            return result
     
 
 
@@ -158,7 +169,7 @@ def cli():
 def bls():
     """List available boards"""
     rcmd = RCMD()
-    rcmd.list_boards()
+    rcmd.list_boards(return_output=False)
 
 @cli.command()
 @click.option('-b', '--board', required=True, help='(required) Board ID for run command')
@@ -166,7 +177,7 @@ def bls():
 def mls(board, task):
     """List available models in the board"""
     rcmd = RCMD()
-    rcmd.list_models(board_id=board, task=task)
+    rcmd.list_models(board_id=board, task=task, return_output=False)
 
 @cli.command()
 @click.option('-b', '--board', required=True, help='(required)Board ID for run command')
@@ -178,7 +189,7 @@ def mls(board, task):
 def run(board, model, task, lne, images, input_size):
     """Run a model on a specific board"""
     rcmd = RCMD()
-    rcmd.run_model(board_id=board, model_name=model, task=task, lne=lne, images=images, input_size=input_size)
+    rcmd.run_model(board_id=board, model_name=model, task=task, lne=lne, images=images, input_size=input_size, return_output=False)
 
 if __name__ == "__main__":
     cli()
