@@ -2,19 +2,19 @@
     "boards": [
         {
             "boardID"   : "001",
-            "ipAddr"    : "192.168.0.163",
+            "ipAddr"    : "192.168.0.111",
             "port"      : "5000",
-            "username"  : "aimf",
-            "password"  : "siliconeuro",
-            "eval_dir"  : "/home/aimf/evaluate/"      
+            "username"  : "username1",
+            "password"  : "12345",
+            "eval_dir"  : "/home/dir_to_evaluate/"      
         },
         {
             "boardID"   : "002",
-            "ipAddr"    : "192.168.0.159",
+            "ipAddr"    : "192.168.0.222",
             "port"      : "5001",
-            "username"  : "aimf",
-            "password"  : "siliconeuro",
-            "eval_dir"  : "/home/aimf/evaluate/"  
+            "username"  : "username2",
+            "password"  : "12345",
+            "eval_dir"  : "/home/dir_to_evaluate/"  
         }
     ]
 }
