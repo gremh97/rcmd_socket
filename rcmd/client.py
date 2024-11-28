@@ -10,7 +10,7 @@ from pycocotools.cocoeval import COCOeval
 
 
 class Client:
-    def __init__(self, server_ip='192.168.0.163', port=5000, buffer_size=4096, timeout=None):
+    def __init__(self, server_ip='192.168.0.111', port=5000, buffer_size=4096, timeout=None):
         self.server_ip = server_ip
         self.port = port
         self.buffer_size = buffer_size
@@ -84,7 +84,7 @@ class Client:
         return response.decode('utf-8')
 
 
-    def communicate(self, option, task=None, model_name=None, lne_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None, return_output=False):
+    def communicate(self, option, task=None, model_name=None, tflite_path=None, num_images=1000, preproc_resize=(256, 256), log=False, eval_dir=None, return_output=False):
         if  option == "exit":
             exit_msg = {"cmd":option}
             self.send_data(exit_msg)
@@ -112,13 +112,13 @@ class Client:
             self.display_model_list(result)
 
         else:
-            if not(model_name or lne_path):
-                raise ValueError("One of model_name or lne_path must be provided")
+            if not(model_name or tflite_path):
+                raise ValueError("One of model_name or tflite_path must be provided")
             params = {
                 "cmd"           : option,
                 "task"          : task,
                 "model_name"    : model_name,
-                "lne_path"      : lne_path,
+                "tflite_path"      : tflite_path,
                 "num_images"    : num_images,
                 "preproc_resize": preproc_resize,
                 "log": log,
@@ -171,7 +171,7 @@ class Client:
                 filtered_result[k] = v
 
         model_name  = filtered_result.get('model_name', 'Unknown Model')
-        lne_path    = filtered_result.get('lne_path', 'N/A')
+        tflite_path    = filtered_result.get('tflite_path', 'N/A')
         avg_fps     = filtered_result.get('average_fps', 'N/A')
         min_fps     = filtered_result.get('min_fps', 'N/A')
         max_fps     = filtered_result.get('max_fps', 'N/A')
@@ -181,7 +181,7 @@ class Client:
         click.echo("\n\n")
         title = f"================== Image Classification for {model_name} =================="
         click.echo(title)
-        click.echo(f"  LNE file       : {lne_path}")
+        click.echo(f"  tflite file    : {tflite_path}")
         click.echo(f"  Average FPS    : {avg_fps}")
         click.echo(f"      min FPS    : {min_fps}")
         click.echo(f"      max FPS    : {max_fps}")

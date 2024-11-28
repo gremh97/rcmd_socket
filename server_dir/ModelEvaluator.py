@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import lne_tflite.interpreter as lne
+import tensorflow as tf
 import PIL.Image
 import numpy as np
 import glob
@@ -10,19 +10,19 @@ import json
 import os
 
 class ClassifierEvaluator:
-    def __init__(self, model_name=None, lne_path="/home/aimf/evaluate/classify/input/efficientnet_lite0.lne", 
+    def __init__(self, model_name=None, tflite_path="/home/evaluate/classify/input/efficientnet_lite0.tflite", 
                  num_images=1000, preproc_resize=(256,256), log=False):
-        self.model_name         = model_name or lne_path.split("/")[-1].split(".")[0]
-        self.lne_path           = lne_path
+        self.model_name         = model_name or tflite_path.split("/")[-1].split(".")[0]
+        self.tflite_path           = tflite_path
         self.preproc_fn         = self._get_preproc_fn()
         self.num_images         = num_images
         self.preproc_resize     = preproc_resize
         self.log                = log
         self.log_data           = []
-        self.eval_dir           = os.path.dirname(os.path.dirname(lne_path))
+        self.eval_dir           = os.path.dirname(os.path.dirname(tflite_path))
 
         #  Model Initalization
-        self.model              = lne.Interpreter(self.lne_path)
+        self.model              = tf.lite.Interpreter(self.tflite_path)
         self.model.allocate_tensors()
         self.input_shape        = self.model.get_input_details()[0]["shape"][1:3]
         self.output_detail      = self.model.get_output_details()[0]
@@ -100,7 +100,7 @@ class ClassifierEvaluator:
         results = {
             "type"          : "complete_classifier",
             "model_name"    : self.model_name,
-            "lne_path"      : self.lne_path,
+            "tflite_path"      : self.tflite_path,
             "average_fps"   : f"{np.mean(fps)}",
             "min_fps"       : f"{np.min(fps)}",
             "max_fps"       : f"{np.max(fps)}",
@@ -131,10 +131,10 @@ def generate_colors(nclasses):
     return colors
 
 class YoloEvaluator:
-    def __init__(self, model_name, lne_path, num_images=5000, save_json=False):
+    def __init__(self, model_name, tflite_path, num_images=5000, save_json=False):
         self.model_name     = model_name
         self.num_images     = num_images       
-        self.interpreter    = lne.Interpreter(lne_path)
+        self.interpreter    = tf.lite.Interpreter(tflite_path)
         self.interpreter.allocate_tensors()
         self.input_detail   = self.interpreter.get_input_details()
         self.output_detail  = self.interpreter.get_output_details()
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     
     evaluator = YoloEvaluator(
         model_name="yolov2" , 
-        lne_path="/home/aimf/evaluate/detect_yolo/input/yolov2.lne", 
+        tflite_path="/home/evaluate/detect_yolo/input/yolov2.tflite", 
         num_images=100, 
         save_json=True
     )

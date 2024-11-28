@@ -71,8 +71,8 @@ def save_json(json_file_path, current_models):
 
 
 def update_model_list(  tasks = ['classify', 'detect', 'detect_yolo'],
-                        base_dir = '/home/aimf/evaluate',
-                        json_file_path = '/home/aimf/models_by_task.json'):
+                        base_dir = '/home/evaluate',
+                        json_file_path = '/home/models_by_task.json'):
 
     tasks = tasks if isinstance(tasks, list) else [tasks]
     

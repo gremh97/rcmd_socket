@@ -129,7 +129,7 @@ class RCMD:
         
 
 
-    def run_model(self, board_id: str, model_name: str, task:str, lne:str, images:int, input_size:int, return_output:bool):
+    def run_model(self, board_id: str, model_name: str, task:str, tflite:str, images:int, input_size:int, return_output:bool):
         board = next((b for b in self.boards if b['boardID'] == board_id), None)
         if not board:
             click.echo(f"Board with ID {board_id} not found", err=True)
@@ -143,7 +143,7 @@ class RCMD:
                 option="test",
                 task=task,
                 model_name=model_name,
-                lne_path=lne,
+                tflite_path=tflite,
                 num_images=images,
                 preproc_resize=(input_size, input_size),
                 log=False,
@@ -184,13 +184,13 @@ def mls(board, task):
 @click.option('-b', '--board', required=True, help='(required)Board ID for run command')
 @click.option('-m', '--model', required=True, help='(required)Model name for run command')
 @click.option('-t', '--task',  required=False, default= None, help='Task that model performs (classify, detect, detect_yolo)')
-@click.option('-l', '--lne', required=False, default=None, help='path to .lne file in the board. `task` must be specified')
+@click.option('-l', '--tflite', required=False, default=None, help='path to .tflite file in the board. `task` must be specified')
 @click.option('-n', '--images', required=False, type=int, default=1000, help='Number of images for run command')
 @click.option('-is', '--input_size', required=False, type=int, default=256, help='Input image size of model for run command')
-def run(board, model, task, lne, images, input_size):
+def run(board, model, task, tflite, images, input_size):
     """Run a model on a specific board"""
     rcmd = RCMD()
-    rcmd.run_model(board_id=board, model_name=model, task=task, lne=lne, images=images, input_size=input_size, return_output=False)
+    rcmd.run_model(board_id=board, model_name=model, task=task, tflite=tflite, images=images, input_size=input_size, return_output=False)
 
 if __name__ == "__main__":
     cli()
