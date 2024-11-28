@@ -78,13 +78,13 @@ After installation, you can use the `rcmd` command directly from your terminal:
   ```
   rcmd run -b <board_id> -m <model_name>
   ```
-  - options
-    `-b, --board`     : board id **required**
-    `-m, --model`     : model name **required**
-    `-t, --task`      : taks(classify, detect, detect_yolo)
-    `-l, --lne`       : lne path in board (When assigning the `lne`, the `task` must be explicitly specified.)
-    `-n, --images`    : number of images (default=1000)
-    `-is, input_size` : Input image size of model (default: 256)
+  - options  
+    `-b, --board`     : board id **required**  
+    `-m, --model`     : model name **required**  
+    `-t, --task`      : taks(classify, detect, detect_yolo)  
+    `-l, --lne`       : lne path in board (When assigning the `lne`, the `task` must be explicitly specified.)  
+    `-n, --images`    : number of images (default=1000)  
+    `-is, input_size` : Input image size of model (default: 256)  
   
 
 For more information on each command, use the `--help` option:
