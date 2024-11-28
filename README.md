@@ -8,7 +8,7 @@ inside of board's `eval_dir`, before Installation and Run `rcmd` command.
 Each model should be under `{classify, detect, detect_yolo}/input`
 
 ```
-eval_dir = /home/aimf/evaluate
+eval_dir = /home/evaluate
 
 *
 └── evaluate
