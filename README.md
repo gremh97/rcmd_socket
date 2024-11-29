@@ -118,7 +118,7 @@ for board in result1:
 result3 = rcmd_instance.run_model(board_id='001', 
                                  model_name='efficientnet_lite0',
                                  task="classify",
-                                 lne=None,
+                                 tflite=None,
                                  images=100,
                                  input_size=256,
                                  return_output=True                             # if you want to get result, set return_output=True
