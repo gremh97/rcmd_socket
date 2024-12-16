@@ -14,25 +14,25 @@ eval_dir = /home/evaluate
 └── evaluate
     ├── classify
     │   ├── input
-    │   │   └── efficientnet_lite0.lne
+    │   │   └── efficientnet_lite0.tflite
     │   ├── labels
     │   │   ├── category.txt
     │   │   └── groundtruth.txt
     │   ├── output
-    │   │   └── mobilenetv1.lne
+    │   │   └── mobilenetv1.tflite
     │   ├── test_classify.py
     ├── detect
     │   ├── input
-    │   │   ├── yolov2_tiny.lne
-    │   │   ├── yolov3_keti.lne
-    │   │   └── yolov3_tiny.lne
+    │   │   ├── yolov2_tiny.tflite
+    │   │   ├── yolov3_keti.tflite
+    │   │   └── yolov3_tiny.tflite
     │   ├── objectdetect_yolo.py
     │   └── output
     │       └── yolov3.json
     ├── detect_yolo
     │   ├── export_json.sh
     │   ├── input
-    │   │   └── yolov2.lne
+    │   │   └── yolov2.tflite
     │   ├── labels
     │   │   ├── coco80.txt
     │   │   └── coco90.txt
@@ -41,7 +41,7 @@ eval_dir = /home/evaluate
     │   ├── test_yolo.sh
     │   ├── yolo_util.py
     │   ├── yolov2.json
-    │   └── yolov2.lne
+    │   └── yolov2.tflite
     └── server_dir
         ├── ModelEvaluator.py
         ├── json_utils.py
@@ -82,7 +82,7 @@ After installation, you can use the `rcmd` command directly from your terminal:
     `-b, --board`     : board id **required**  
     `-m, --model`     : model name **required**  
     `-t, --task`      : taks(classify, detect, detect_yolo)  
-    `-l, --lne`       : lne path in board (When assigning the `lne`, the `task` must be explicitly specified.)  
+    `-l, --tflite`       : tflite path in board (When assigning the `tflite`, the `task` must be explicitly specified.)  
     `-n, --images`    : number of images (default=1000)  
     `-is, input_size` : Input image size of model (default: 256)  
   
